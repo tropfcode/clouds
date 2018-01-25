@@ -46,19 +46,27 @@ def load_data():
     return taupc_histograms
 
 def gridboxes(datapath):
-    wsnums = np.zeros((360, 180, 12))
-    wscount = np.zeros((360, 180))
+    """
+    Finda Frequency of Occurance for each Weather State and total.
+    Currently only for one year at a time.
+    
+    RETURN
+    ------
+    wsgrids: np.array, shape=(360, 180, 12), type=int
+        Gridboxes for each weather state
+        
+    grid: np.array, shape=(360, 180), type=int
+        Total gridbox
+    """
+    wsgrids = np.zeros((360, 180, 12))
+    grid = np.zeros((360, 180))
     masks = np.zeros((6, 7, 41252), dtype=bool)
-    #basepath = '/home/derektropf/Documents/NASA/code/ISCCP_HSeries_HGG_v01r00_198307_c20170705'
-    #fullpath = '/home/derektropf/Documents/NASA/code/ISCCP_HSeries_HGG_v01r00_198307_c20170705/ISCCP.HGG.v01r00.GLOBAL.1983.07.01.0000.GPC.10KM.CS00.EQ1.00.nc'
-    basepath = datapath
-    for f1 in sorted(os.listdir(basepath)):
+    histograms = load_data()
+    for f1 in sorted(os.listdir(datapath)):
         t1 = time.time()
         print('this is f1', f1)
-        for f2 in sorted(os.listdir(basepath+f1+'/')):
-            #print('this is f2', f2)
-            #fullpath = basepath+'/'+f
-            fullpath = basepath+f1+'/'+f2
+        for f2 in sorted(os.listdir(datapath+f1+'/')):
+            fullpath = datapath+f1+'/'+f2
             data = netCDF4.Dataset(fullpath)
             pctaudist = data['n_pctaudist']
             sqlonbeg = data['sqlon_beg'][:]
@@ -67,8 +75,8 @@ def gridboxes(datapath):
             ntotal = data['n_total'][:]
             masks[:,:,:] = np.ma.getmaskarray(pctaudist[:,:,:])
             pctaudistnorm = analysis.fnorm(pctaudist[:,:,:], ntotal[:], masks[:,:,:])
-            histograms = load_data()
-            wsnums, wscount = analysis.findws(pctaudistnorm[:,:,:], histograms[:,:,:]/100.0, masks[:,:,:], 
-                                                wsnums[:,:,:], wscount[:,:], sqlonbeg[:], sqlonend[:], eqlat[:])
+            wsgrids, grid = analysis.findws(pctaudistnorm[:,:,:], histograms[:,:,:]/100.0, masks[:,:,:], 
+                                                wsgrids[:,:,:], grid[:,:], sqlonbeg[:], sqlonend[:], eqlat[:])
         t2 = time.time()
         print('run time for entire month ', t2-t1)
+        return wsgrids, grid
