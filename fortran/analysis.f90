@@ -41,12 +41,13 @@ subroutine findws(dist, histograms, masks, wsnums, wscount, sqlonbeg, sqlonend, 
     integer, dimension(41252), intent(in) :: eqlat
     real, dimension(6, 7) :: tmparr
     real, dimension(12) :: distances
-    integer :: first, last, diff, i, j, ws
+    !integer :: first, last, diff, Delete if below lines are not necessary 
+    integer :: i, j, ws
     tmparr = 0
     distances = 0
     do i=1, 41252
-        diff = abs(sqlonbeg(i)-sqlonend(i))!+1
-        last = last + diff
+        !diff = abs(sqlonbeg(i)-sqlonend(i))!+1 Find out if these lines are not necessary
+        !last = last + diff
         if (all(masks(:,:,i))) then
             cycle
         end if
