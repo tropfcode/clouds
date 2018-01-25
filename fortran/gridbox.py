@@ -5,12 +5,12 @@ import time
 import locale
 import netCDF4
 import analysis
+import decorators
 import numpy as np
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-import decorator
 
 def load_data():
     """
@@ -44,3 +44,31 @@ def load_data():
 
     taupc_histograms = taupc_histograms.astype(np.float32)
     return taupc_histograms
+
+def gridboxes(datapath):
+    wsnums = np.zeros((360, 180, 12))
+    wscount = np.zeros((360, 180))
+    masks = np.zeros((6, 7, 41252), dtype=bool)
+    #basepath = '/home/derektropf/Documents/NASA/code/ISCCP_HSeries_HGG_v01r00_198307_c20170705'
+    #fullpath = '/home/derektropf/Documents/NASA/code/ISCCP_HSeries_HGG_v01r00_198307_c20170705/ISCCP.HGG.v01r00.GLOBAL.1983.07.01.0000.GPC.10KM.CS00.EQ1.00.nc'
+    basepath = datapath
+    for f1 in sorted(os.listdir(basepath)):
+        t1 = time.time()
+        print('this is f1', f1)
+        for f2 in sorted(os.listdir(basepath+f1+'/')):
+            #print('this is f2', f2)
+            #fullpath = basepath+'/'+f
+            fullpath = basepath+f1+'/'+f2
+            data = netCDF4.Dataset(fullpath)
+            pctaudist = data['n_pctaudist']
+            sqlonbeg = data['sqlon_beg'][:]
+            sqlonend = data['sqlon_end'][:]
+            eqlat = data['eqlat_index'][:]
+            ntotal = data['n_total'][:]
+            masks[:,:,:] = np.ma.getmaskarray(pctaudist[:,:,:])
+            pctaudistnorm = analysis.fnorm(pctaudist[:,:,:], ntotal[:], masks[:,:,:])
+            histograms = load_data()
+            wsnums, wscount = analysis.findws(pctaudistnorm[:,:,:], histograms[:,:,:]/100.0, masks[:,:,:], 
+                                                wsnums[:,:,:], wscount[:,:], sqlonbeg[:], sqlonend[:], eqlat[:])
+        t2 = time.time()
+        print('run time for entire month ', t2-t1)
